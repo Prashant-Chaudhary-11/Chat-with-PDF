@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat with PDF</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"> <style>
+    /* --- CSS Variables for easy theming --- */
+    :root {
+      --primary-color: #2c7ef8; /* A vibrant blue */
+      --secondary-color: #00bcd4; /* Cyan */
+      --background-light: #f7f9fc; /* Off-white, soft background */
+      --background-dark: #eef2f6; /* Slightly darker for pdf section */
+      --text-color-dark: #333;
+      --text-color-light: #f9f9f9;
+      --border-color: #e0e6ed;
+      --chat-bubble-user: #e0f7fa; /* Light cyan */
+      --chat-bubble-gemini: #f0f2f5; /* Light grey/blue for AI */
+      --shadow-light: 0 2px 10px rgba(0, 0, 0, 0.08);
+      --shadow-deep: 0 8px 25px rgba(0, 0, 0, 0.15);
+      --card-bg: #ffffff;
+      --input-bg: #ffffff;
+    }
+
+    body {
+      display: flex;
+      height: 100vh;
+      margin: 0;
+      font-family: 'Roboto', sans-serif;
+      color: var(--text-color-dark);
+      background-color: var(--background-light);
+      overflow: hidden; /* Prevent body scroll */
+      box-sizing: border-box;
+    }
+
+    /* --- General Layout --- */
+    #pdf-section, #chat-section {
+      flex: 1;
+      padding: 20px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      gap: 20px; /* Increased gap */
+    }
+
+    #pdf-section {
+      background: var(--background-dark);
+      border-right: 1px solid var(--border-color);
+    }
+
+    #chat-section {
+      background: var(--background-light);
+    }
+
+    /* --- PDF Viewer Styles --- */
+    .file-input-container {
+      background-color: var(--card-bg);
+      border: 2px dashed var(--border-color);
+      padding: 25px; /* Increased padding */
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border-radius: 12px; /* More rounded */
+      box-shadow: var(--shadow-light);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .file-input-container:hover {
+      border-color: var(--primary-color);
+      background-color: #f0f6ff; /* Lighter blue for hover */
+      box-shadow: var(--shadow-deep);
+      transform: translateY(-2px);
+    }
+
+    .file-input-container input[type="file"] {
+      display: none;
+    }
+
+    .file-input-container label {
+      font-size: 1.2em; /* Larger font */
+      color: var(--primary-color); /* Highlight color */
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .file-input-container .material-icons {
+        font-size: 2.5em; /* Larger icon */
+        color: var(--primary-color);
+    }
+
+    #pdfViewer {
+      width: 100%;
+      flex-grow: 1;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      box-shadow: var(--shadow-light);
+      min-height: 0;
+      background-color: var(--card-bg); /* Ensure white background for viewer */
+    }
+
+    /* --- Chat Section Styles --- */
+    #chat-box {
+      flex: 1;
+      overflow-y: auto;
+      background: var(--card-bg);
+      margin-bottom: 15px;
+      padding: 15px;
+      border-radius: 12px;
+      box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.05); /* Deeper inner shadow */
+      display: flex;
+      flex-direction: column;
+      gap: 12px; /* Slightly larger gap between messages */
+    }
+
+    /* Scrollbar Styling (Webkit) */
+    #chat-box::-webkit-scrollbar {
+        width: 8px;
+    }
+    #chat-box::-webkit-scrollbar-track {
+        background: var(--background-light);
+        border-radius: 10px;
+    }
+    #chat-box::-webkit-scrollbar-thumb {
+        background: var(--border-color);
+        border-radius: 10px;
+    }
+    #chat-box::-webkit-scrollbar-thumb:hover {
+        background: var(--primary-color);
+    }
+
+
+    .chat-message {
+      padding: 12px 18px; /* More padding */
+      border-radius: 24px; /* More rounded bubbles */
+      max-width: 85%; /* Slightly wider max-width */
+      word-wrap: break-word;
+      line-height: 1.5;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+      font-size: 0.95em; /* Slightly larger font */
+    }
+
+    .chat-message.user {
+      align-self: flex-end;
+      background-color: var(--primary-color);
+      color: var(--text-color-light);
+      border-bottom-right-radius: 6px; /* A slight modern touch */
+    }
+
+    .chat-message.gemini {
+      align-self: flex-start;
+      background-color: var(--chat-bubble-gemini);
+      color: var(--text-color-dark);
+      border-bottom-left-radius: 6px;
+    }
+
+    .chat-message.gemini i {
+      color: #666; /* Lighter color for thinking message */
+    }
+
+    .chat-input-area {
+      display: flex;
+      gap: 12px; /* Increased gap */
+      padding-top: 15px; /* More padding */
+      border-top: 1px solid var(--border-color);
+      background-color: var(--background-light); /* Ensure consistent background */
+    }
+
+    #question {
+      flex: 1;
+      padding: 14px 20px; /* More padding */
+      border: 1px solid var(--border-color);
+      border-radius: 30px; /* More rounded pill shape */
+      font-size: 1em;
+      outline: none;
+      transition: all 0.3s ease;
+      background-color: var(--input-bg);
+      box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    #question::placeholder {
+      color: #999;
+    }
+
+    #question:focus {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 4px rgba(44, 126, 248, 0.2); /* Primary color shadow */
+    }
+
+    button {
+      padding: 14px 30px; /* More padding */
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 30px; /* More rounded pill shape */
+      cursor: pointer;
+      font-size: 1em;
+      font-weight: 600; /* Bolder */
+      transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+      box-shadow: var(--shadow-light);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    button:hover {
+      background-color: #236ddb; /* Darker blue */
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-deep);
+    }
+
+    button:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    button:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    /* --- Responsive Design (Media Queries) --- */
+    @media (max-width: 768px) {
+      body {
+        flex-direction: column; /* Stack sections vertically */
+        overflow-y: auto; /* Allow scrolling on the whole page */
+      }
+
+      #pdf-section, #chat-section {
+        flex: none; /* Don't grow */
+        height: auto; /* Height adapts to content */
+        min-height: 50vh; /* Minimum height for each section */
+        padding: 15px; /* Smaller padding on mobile */
+      }
+
+      #pdf-section {
+        border-right: none;
+        border-bottom: 1px solid var(--border-color); /* Separator when stacked */
+      }
+      
+      .file-input-container {
+        padding: 15px;
+      }
+      .file-input-container label {
+        font-size: 1em;
+      }
+      .file-input-container .material-icons {
+        font-size: 2em;
+      }
+
+      #pdfViewer {
+        height: 40vh; /* Shorter PDF viewer on mobile */
+        min-height: unset;
+      }
+
+      #chat-box {
+        margin-bottom: 10px;
+        padding: 10px;
+        flex-basis: 60vh; /* Give chat box more priority on mobile */
+      }
+
+      .chat-message {
+        font-size: 0.9em;
+        padding: 10px 15px;
+      }
+
+      .chat-input-area {
+        flex-direction: row; /* Keep input and button side-by-side if enough space */
+        gap: 8px;
+        padding-top: 10px;
+      }
+
+      #question {
+        padding: 10px 15px;
+        font-size: 0.9em;
+      }
+
+      button {
+        padding: 10px 20px;
+        font-size: 0.9em;
+      }
+    }
+
+    @media (max-width: 480px) {
+        /* Even smaller screens */
+        #chat-input-area {
+            flex-wrap: wrap; /* Allow input and button to wrap */
+        }
+        #question {
+            flex-basis: 100%; /* Input takes full width */
+            margin-bottom: 10px; /* Space before button */
+        }
+        button {
+            flex-basis: 100%; /* Button takes full width */
+        }
+    }
+
+  </style>
+</head>
+<body>
+  <div id="pdf-section">
+    <div class="file-input-container" onclick="document.getElementById('pdfFile').click()">
+      <input type="file" id="pdfFile" accept=".pdf">
+      <label for="pdfFile">
+        <span class="material-icons">upload_file</span>
+        <strong>Upload PDF</strong> <br> (Click or Drag & Drop)
+      </label>
+    </div>
+    <iframe id="pdfViewer" src="" title="PDF Viewer"></iframe>
+  </div>
+
+  <div id="chat-section">
+    <div id="chat-box">
+      <div class="chat-message gemini">
+        👋 Welcome! Please upload a PDF to start our chat. 📚🤖
+      </div>
+    </div>
+    <div class="chat-input-area">
+      <input type="text" id="question" placeholder="Ask your question..." disabled>
+      <button onclick="askQuestion()" id="askButton" disabled>
+        Ask <span class="material-icons">send</span>
+      </button>
+    </div>
+  </div>
+
+  <script>
+    const backend = "http://localhost:8000"; // Ensure this matches your FastAPI server address
+    const questionInput = document.getElementById("question");
+    const askButton = document.getElementById("askButton");
+    const chatBox = document.getElementById("chat-box");
+    const pdfViewer = document.getElementById("pdfViewer");
+
+    // Function to enable/disable chat input and button
+    function setChatEnabled(enabled) {
+        questionInput.disabled = !enabled;
+        askButton.disabled = !enabled;
+        if (enabled) {
+            questionInput.focus(); // Focus on input when ready
+        }
+    }
+
+    // Initialize chat as disabled
+    setChatEnabled(false);
+
+    // Handle PDF file upload
+    document.getElementById("pdfFile").onchange = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      // Disable chat during upload
+      setChatEnabled(false);
+      
+      // Clear previous chat and show new upload message
+      chatBox.innerHTML = '<div class="chat-message gemini">👋 Welcome! Please upload a PDF to start our chat. 📚🤖</div>';
+      chatBox.innerHTML += `<div class="chat-message gemini">Processing "${file.name}"... This may take a moment. ⏳</div>`;
+      chatBox.scrollTop = chatBox.scrollHeight;
+      
+      const formData = new FormData();
+      formData.append("file", file);
+
+      try {
+        const res = await fetch(`${backend}/upload`, { method: "POST", body: formData });
+        
+        // Remove the "Processing..." message
+        const processingMessage = chatBox.querySelector('.chat-message.gemini:last-child');
+        if (processingMessage && processingMessage.textContent.includes('Processing')) {
+            processingMessage.remove(); 
+        }
+
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.detail || `HTTP error! status: ${res.status}`);
+        }
+        await res.json(); // Assuming backend sends a success response JSON
+
+        // Display the PDF in the iframe
+        pdfViewer.src = URL.createObjectURL(file);
+
+        // Update chat box with success message
+        chatBox.innerHTML += `<div class="chat-message gemini">PDF "${file.name}" uploaded successfully! You can now ask questions. 🎉</div>`;
+        setChatEnabled(true); // Enable chat
+      } catch (error) {
+        console.error("Error uploading PDF:", error);
+        const errorMessage = error.message || 'An unknown error occurred.';
+        chatBox.innerHTML += `<div class="chat-message gemini" style="color: #d32f2f;">Error uploading PDF: ${errorMessage} Please try again. 😟</div>`;
+        setChatEnabled(false); // Keep disabled on error
+      }
+      chatBox.scrollTop = chatBox.scrollHeight;
+    };
+
+    // Handle "Enter" key press to send message
+    questionInput.addEventListener("keydown", function(event) {
+      if (event.key === "Enter" && !questionInput.disabled) { // Only send if not disabled
+        event.preventDefault(); 
+        askQuestion();
+      }
+    });
+
+    // Function to send question to backend
+    async function askQuestion() {
+      const q = questionInput.value.trim();
+      if (!q) return;
+
+      // Display user's question
+      chatBox.innerHTML += `<div class="chat-message user"><b>You:</b> ${q}</div>`;
+      questionInput.value = ""; // Clear input field
+      setChatEnabled(false); // Temporarily disable while thinking
+      chatBox.scrollTop = chatBox.scrollHeight; // Scroll to bottom
+
+      try {
+        // Display "Thinking..." message
+        const thinkingMessageDiv = document.createElement('div');
+        thinkingMessageDiv.className = 'chat-message gemini thinking-message'; 
+        thinkingMessageDiv.innerHTML = '<i>Thinking...</i>';
+        chatBox.appendChild(thinkingMessageDiv);
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        const res = await fetch(`${backend}/ask`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question: q })
+        });
+
+        // Remove "Thinking..." message
+        const thinkingMessage = chatBox.querySelector('.thinking-message');
+        if (thinkingMessage) {
+            thinkingMessage.remove(); 
+        }
+
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.detail || `HTTP error! status: ${res.status}`);
+        }
+
+        const data = await res.json();
+        console.log("data:", data);
+        
+        chatBox.innerHTML += `<div class="chat-message gemini"><b>Gemini:</b> ${data.answer}</div>`;
+      } catch (error) {
+        console.error("Error asking question:", error);
+        const thinkingMessage = chatBox.querySelector('.thinking-message');
+        if (thinkingMessage) {
+            thinkingMessage.remove();
+        }
+        const errorMessage = error.message || 'An unknown error occurred.';
+        chatBox.innerHTML += `<div class="chat-message gemini" style="color: #d32f2f;">Error getting response: ${errorMessage} 😔</div>`;
+      } finally {
+        setChatEnabled(true); // Re-enable chat after response or error
+        chatBox.scrollTop = chatBox.scrollHeight; // Scroll to bottom
+      }
+    }
+  </script>
+</body>
+</html>
