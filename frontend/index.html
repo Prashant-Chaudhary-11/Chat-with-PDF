@@ -174,7 +174,6 @@
     const questionInput = document.getElementById("question");
     const askButton = document.getElementById("askButton");
     const chatBox = document.getElementById("chat-box");
-    const uploadedFileNameSpan = document.getElementById("uploadedFileName");
     const getStartedBtn = document.getElementById("getStartedBtn");
     const firstComp = document.getElementById("firstComp");
 
@@ -197,9 +196,6 @@
     // Initialize chat as disabled
     setChatEnabled(false);
 
-    // Initial state for the mobile tag (no file uploaded yet)
-    uploadedFileNameSpan.textContent = 'No file uploaded';
-
     // Handle PDF file upload
     document.getElementById("pdfFile").onchange = async (e) => {
       const file = e.target.files[0];
@@ -207,9 +203,6 @@
 
       // Disable chat during upload
       setChatEnabled(false);
-      
-      // Update the mobile tag immediately
-      uploadedFileNameSpan.textContent = `File: ${file.name}`;
 
 
       // Clear previous chat and show new upload message
@@ -245,8 +238,6 @@
         const errorMessage = error.message || 'An unknown error occurred.';
         chatBox.innerHTML += `<div class="chat-message gemini" style="color: #d32f2f;">Error uploading PDF: ${errorMessage} Please try again. 😟</div>`;
         setChatEnabled(false); // Keep disabled on error
-        // Revert mobile tag on error
-        uploadedFileNameSpan.textContent = 'Upload failed. Please try again.';
       }
       chatBox.scrollTop = chatBox.scrollHeight;
     };
