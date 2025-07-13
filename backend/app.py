@@ -26,7 +26,11 @@ class Query(BaseModel):
 
 @app.post("/upload")
 async def upload_pdf(file: UploadFile = File(...)):
-    path = f"temp/{file.filename}"
+    dir_path = "temp"
+    if not os.path.exists(dir_path):
+        os.makedirs(dir_path)  # create 'temp' folder if not present
+
+    path = f"{dir_path}/{file.filename}"
     with open(path, "wb") as f:
         f.write(await file.read())
     global chunks, vectorizer
