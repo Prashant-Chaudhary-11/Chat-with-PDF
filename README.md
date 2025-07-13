@@ -36,10 +36,8 @@ ChatWithPdf/
 ├── backend/
 │   ├── app.py              # FastAPI backend logic
 │   └── utils.py            # PDF processing and chunking
-├── templates/
+├── frontend/
 │   └── index.html          # Frontend interface
-├── static/
-│   └── script.js           # JS logic for upload/chat
 ├── .env                    # API keys and config
 ├── requirements.txt        # Python dependencies
 └── README.md               # Project documentation
@@ -73,7 +71,7 @@ uvicorn app:app --reload --port 8000
 ```
 
 ### 5. Open the frontend
-Open `templates/index.html` in your browser directly or serve it via a local HTTP server.
+Open `frontend/index.html` in your browser directly or serve it via a local HTTP server.
 
 ---
 
