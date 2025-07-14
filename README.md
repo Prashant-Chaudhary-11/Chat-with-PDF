@@ -98,5 +98,5 @@ This project is licensed under the [MIT License](LICENSE).
 ## 🙋‍♂️ Author
 
 **Prashant Chaudhary**  
-📧 [prashant.chaudhary@ucertify.com](mailto:prashant.chaudhary@ucertify.com)  
+📧 [prashantchaudhary1106@gmail.com](mailto:prashantchaudhary1106@gmail.com)  
 🌐 [GitHub Profile](https://github.com/Prashant-Chaudhary-11)
