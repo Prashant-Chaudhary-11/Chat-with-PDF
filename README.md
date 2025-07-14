@@ -4,6 +4,12 @@ A full-stack web app where users can upload a PDF, ask questions about it, and r
 
 ---
 
+## 🌐 Live Demo
+
+🔗 [https://chattingwithpdf.netlify.app/](https://chattingwithpdf.netlify.app/)
+
+---
+
 ## 🔧 Features
 
 - 🗂 Upload a PDF and preview it on the left side.
